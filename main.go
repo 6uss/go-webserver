@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 )
 
 type NewsAggPage struct {
@@ -22,7 +23,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 
 	p := NewsAggPage{
 		IP:       getPublicIP(),
-		Port:     r.RemoteAddr,
+		Port:     getRemotePort(r.RemoteAddr),
 		Method:   r.Method,
 		Protocol: r.Proto,
 		Host:     r.Host,
@@ -47,6 +48,12 @@ func getPublicIP() string {
 	body, _ := ioutil.ReadAll(res.Body)
 
 	return string(body)
+}
+func getRemotePort(remAddr string) string {
+	re := regexp.MustCompile("(?:[0-9]+)$")
+	match := re.FindStringSubmatch(remAddr)
+	return match[0]
+
 }
 func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))

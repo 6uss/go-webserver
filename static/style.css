@@ -1,0 +1,19 @@
+body, html {
+    height: 100%;
+}
+body {
+    background-image: url("bg.jpg");
+    height: 100%;
+    background-repeat: no-repeat;
+    background-size: cover;
+
+}
+.info{
+    width: 40vw;
+    color: #ffffff;
+    background: rgba(0,0,0,0.7);
+}
+.info ul {
+    font-size: 2vh;
+
+}

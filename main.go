@@ -2,8 +2,7 @@ package main
 
 import (
 	"html/template"
-	"log"
-	"net"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -22,7 +21,7 @@ var indextmpl = template.Must(template.ParseFiles("index.html"))
 func requestHandler(w http.ResponseWriter, r *http.Request) {
 
 	p := NewsAggPage{
-		IP:       GetOutboundIP().String(),
+		IP:       getPublicIP(),
 		Port:     r.RemoteAddr,
 		Method:   r.Method,
 		Protocol: r.Proto,
@@ -37,16 +36,17 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetOutboundIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
+func getPublicIP() string {
+	url := "http://169.254.169.254/latest/meta-data/public-ipv4"
 
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	req, _ := http.NewRequest("GET", url, nil)
 
-	return localAddr.IP
+	res, _ := http.DefaultClient.Do(req)
+
+	defer res.Body.Close()
+	body, _ := ioutil.ReadAll(res.Body)
+
+	return string(body)
 }
 func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
@@ -56,37 +56,3 @@ func main() {
 		panic(err)
 	}
 }
-
-/*
-	import (
-		"log"
-		"net"
-		"net/http"
-		"strings"
-	)
-
-	func sayHello(w http.ResponseWriter, r *http.Request) {
-		message := r.URL.Path
-		message = strings.TrimPrefix(message, "/")
-		message = "Hello " + message
-		w.Write([]byte(message))
-	}
-	func GetOutboundIP() net.IP {
-		conn, err := net.Dial("udp", "8.8.8.8:80")
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer conn.Close()
-
-		localAddr := conn.LocalAddr().(*net.UDPAddr)
-
-		return localAddr.IP
-	}
-	func main() {
-		http.HandleFunc("/", sayHello)
-		if err := http.ListenAndServe(":8080", nil); err != nil {
-			panic(err)
-		}
-		//	https://besthqwallpapers.com/Uploads/4-11-2017/27088/max-verstappen-dutch-racing-driver-red-bull-racing-formula-1-number-33.jpg
-	}
-*/

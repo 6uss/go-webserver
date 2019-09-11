@@ -2,6 +2,8 @@ package main
 
 import (
 	"html/template"
+	"log"
+	"net"
 	"net/http"
 )
 
@@ -20,7 +22,7 @@ var indextmpl = template.Must(template.ParseFiles("index.html"))
 func requestHandler(w http.ResponseWriter, r *http.Request) {
 
 	p := NewsAggPage{
-		IP:       r.Host,
+		IP:       GetOutboundIP().String(),
 		Port:     r.RemoteAddr,
 		Method:   r.Method,
 		Protocol: r.Proto,
@@ -35,11 +37,22 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func GetOutboundIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP
+}
 func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/", requestHandler)
 
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":80", nil); err != nil {
 		panic(err)
 	}
 }
